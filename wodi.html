@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我是卧底游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #players {
+            margin: 20px 0;
+        }
+        .player {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>我是卧底游戏</h1>
+    <div id="players"></div>
+    <input type="text" id="newPlayer" placeholder="输入你的名字" />
+    <button class="button" onclick="addPlayer()">添加你的名字</button>
+    <button class="button" onclick="checkPlayers()">检查玩家数量</button>
+
+    <div id="voteSection" style="display:none;">
+        <h2>投票选出卧底</h2>
+        <div id="votePlayers"></div>
+        <button class="button" onclick="submitVote()">提交投票</button>
+    </div>
+
+    <script>
+        let players = [];
+
+        // 加载玩家名字
+        function loadPlayers() {
+            const storedPlayer = localStorage.getItem('currentPlayer');
+            const allPlayers = JSON.parse(localStorage.getItem('players')) || [];
+            if (storedPlayer) {
+                players.push(storedPlayer);
+            }
+            players = [...new Set([...players, ...allPlayers])]; // 去重合并
+            displayPlayers();
+        }
+
+        function addPlayer() {
+            const playerInput = document.getElementById('newPlayer');
+            const playerName = playerInput.value.trim();
+            if (playerName) {
+                if (localStorage.getItem('currentPlayer')) {
+                    alert('你已经添加过一个名字！');
+                } else {
+                    players.push(playerName);
+                    localStorage.setItem('currentPlayer', playerName);
+                    const allPlayers = JSON.parse(localStorage.getItem('players')) || [];
+                    allPlayers.push(playerName);
+                    localStorage.setItem('players', JSON.stringify(allPlayers));
+                    playerInput.value = '';
+                    displayPlayers();
+                }
+            }
+        }
+
+        function displayPlayers() {
+            const playersDiv = document.getElementById('players');
+            playersDiv.innerHTML = '';
+            players.forEach((player, index) => {
+                playersDiv.innerHTML += `<div class="player">玩家 ${index + 1}: ${player}</div>`;
+            });
+        }
+
+        function checkPlayers() {
+            const totalPlayers = JSON.parse(localStorage.getItem('players')) || [];
+            if (totalPlayers.length < 3) {
+                alert('至少需要三名玩家才能开始游戏！');
+            } else {
+                startGame();
+            }
+        }
+
+        function startGame() {
+            const totalPlayers = JSON.parse(localStorage.getItem('players'));
+            const spyIndex = Math.floor(Math.random() * totalPlayers.length);
+            alert(`卧底是: ${totalPlayers[spyIndex]}（请记住，游戏中不会公开卧底的身份）`);
+            startVoting(totalPlayers);
+        }
+
+        function startVoting(totalPlayers) {
+            const voteSection = document.getElementById('voteSection');
+            const votePlayersDiv = document.getElementById('votePlayers');
+            votePlayersDiv.innerHTML = '';
+            totalPlayers.forEach((player, index) => {
+                votePlayersDiv.innerHTML += `<div><input type="radio" name="vote" value="${index}"> ${player}</div>`;
+            });
+            voteSection.style.display = 'block';
+        }
+
+        function submitVote() {
+            const selectedVote = document.querySelector('input[name="vote"]:checked');
+            if (!selectedVote) {
+                alert('请先选择一名玩家投票！');
+                return;
+            }
+            const votedIndex = selectedVote.value;
+            const votedPlayer = players[votedIndex];
+            alert(`你投票给了: ${votedPlayer}`);
+
+            resetGame();
+        }
+
+        function resetGame() {
+            players = [];
+            localStorage.removeItem('currentPlayer');
+            document.getElementById('players').innerHTML = '';
+            document.getElementById('voteSection').style.display = 'none';
+            document.getElementById('newPlayer').value = '';
+        }
+
+        // 页面加载时调用
+        window.onload = loadPlayers;
+    </script>
+</body>
+</html>
